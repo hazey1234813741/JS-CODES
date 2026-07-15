@@ -1,4 +1,4 @@
-# JS-CODES
+# JS-TOOLBOX
 # STAR THE REPO PLSSS ⭐⭐
 simple JS codes and hacks that i might not update
 # USE MY AI https://hazeyai.pages.dev/
