@@ -12,6 +12,7 @@
             --text-muted: #8b949e;
             --accent-color: #58a6ff;
             --border-color: #30363d;
+            --success-color: #238636;
         }
 
         body {
@@ -50,6 +51,29 @@
             color: var(--text-muted);
         }
 
+        .instructions {
+            background-color: #1f242c;
+            border-left: 4px solid var(--accent-color);
+            padding: 1rem;
+            border-radius: 4px;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 2rem;
+            box-sizing: border-box;
+        }
+
+        .instructions p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .instructions ol {
+            margin: 0;
+            padding-left: 1.2rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
         #tools-container {
             width: 100%;
             max-width: 800px;
@@ -85,6 +109,41 @@
             color: var(--text-muted);
         }
 
+        .folder-tag {
+            display: inline-block;
+            padding: 0.15rem 0.4rem;
+            background-color: #21262d;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-color);
+            margin-right: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-drag {
+            background-color: var(--success-color);
+            border: 1px solid rgba(240,246,252,0.1);
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: grab;
+            display: inline-block;
+            user-select: none;
+        }
+
+        .btn-drag:active {
+            cursor: grabbing;
+        }
+
         .btn-view {
             background-color: #21262d;
             border: 1px solid var(--border-color);
@@ -93,7 +152,6 @@
             border-radius: 6px;
             font-size: 0.85rem;
             font-weight: 600;
-            cursor: pointer;
         }
 
         .btn-view:hover {
@@ -120,14 +178,30 @@
         <p class="repo-link">Live tracking: <a href="https://github.com/TT-ZERTZ/JS-TOOLBOX" target="_blank">TT-ZERTZ/JS-TOOLBOX</a></p>
     </header>
 
+    <div class="instructions">
+        <p><strong>💡 How to use these as Bookmarklets:</strong></p>
+        <ol>
+            <li>Make sure your browser's Bookmarks bar is visible (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> or <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</li>
+            <li>Click and hold the green <strong>Drag to Bookmarks</strong> button.</li>
+            <li>Drag it up to your bookmarks bar and release it. Click it on any website to execute the script!</li>
+        </ol>
+    </div>
+
     <main id="tools-container">
-        <div class="loading">Fetching latest tools from GitHub...</div>
+        <div class="loading">Scanning folders for JavaScript files...</div>
     </main>
 
     <script>
         const REPO_OWNER = 'TT-ZERTZ';
         const REPO_NAME = 'JS-TOOLBOX';
-        const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
+        const BRANCH = 'main'; // Change to 'master' if your main branch uses the older name
+        
+        // Using the recursive Git Trees API to find everything inside subdirectories
+        const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
+
+        function convertToBookmarklet(rawCode) {
+            return 'javascript:(function(){' + encodeURIComponent(rawCode) + '})();';
+        }
 
         async function fetchRepoContents() {
             const container = document.getElementById('tools-container');
@@ -139,47 +213,78 @@
                     throw new Error(`GitHub API responded with status: ${response.status}`);
                 }
                 
-                const items = await response.json();
+                const data = await response.json();
                 
-                // Filter to only display JavaScript files (or folders if you prefer)
-                const jsFiles = items.filter(item => item.type === 'file' && item.name.endsWith('.js'));
+                // Filter elements that are files ('blob') and end with '.js'
+                const jsFiles = data.tree.filter(item => item.type === 'blob' && item.path.endsWith('.js'));
                 
                 if (jsFiles.length === 0) {
-                    container.innerHTML = '<div class="loading">No JavaScript files found in the root directory.</div>';
+                    container.innerHTML = '<div class="loading">No JavaScript files found inside any folders.</div>';
                     return;
                 }
                 
-                // Clear loading text
                 container.innerHTML = '';
                 
-                // Dynamically build the cards
                 jsFiles.forEach(file => {
+                    // Extract path details (e.g., path: "CODES/piano.js")
+                    const pathParts = file.path.split('/');
+                    const fileName = pathParts[pathParts.length - 1];
+                    const folderName = pathParts.length > 1 ? pathParts[0] : 'root';
+                    const cleanName = fileName.replace('.js', '');
+                    
+                    // Generate unique IDs for standard selectors
+                    const elementId = cleanName.replace(/\s+/g, '-').toLowerCase();
+                    
                     const card = document.createElement('div');
                     card.className = 'tool-card';
                     
-                    // Format a cleaner title from the file name (optional)
-                    const cleanName = file.name.replace('.js', '');
-                    
+                    // Build layout with source link and fallback structure
+                    const githubHtmlUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/${BRANCH}/${file.path}`;
+                    const rawDownloadUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${file.path}`;
+
                     card.innerHTML = `
                         <div class="tool-info">
                             <h3>${cleanName}</h3>
-                            <p>${file.name} • ${(file.size / 1024).toFixed(2)} KB</p>
+                            <p><span class="folder-tag">${folderName}</span> ${fileName}</p>
                         </div>
-                        <a href="${file.html_url}" target="_blank">
-                            <button class="btn-view">View Code</button>
-                        </a>
+                        <div class="actions" id="actions-${elementId}">
+                            <a href="${githubHtmlUrl}" target="_blank" class="btn-view">Source</a>
+                            <span class="loading" style="font-size:0.8rem; margin:0; padding-left:5px;">Loading...</span>
+                        </div>
                     `;
                     
                     container.appendChild(card);
+
+                    // Fetch code content to construct the bookmarklet link
+                    fetch(rawDownloadUrl)
+                        .then(res => res.text())
+                        .then(rawCode => {
+                            const actionsDiv = document.getElementById(`actions-${elementId}`);
+                            if (actionsDiv && actionsDiv.lastElementChild) {
+                                actionsDiv.removeChild(actionsDiv.lastElementChild);
+                            }
+                            
+                            const bookmarkletUrl = convertToBookmarklet(rawCode);
+                            
+                            const dragLink = document.createElement('a');
+                            dragLink.href = bookmarkletUrl;
+                            dragLink.className = 'btn-drag';
+                            dragLink.innerText = 'Drag to Bookmarks';
+                            dragLink.onclick = (e) => e.preventDefault(); 
+                            
+                            actionsDiv.insertBefore(dragLink, actionsDiv.firstChild);
+                        })
+                        .catch(err => {
+                            console.error(`Error loading code for ${file.path}:`, err);
+                        });
                 });
                 
             } catch (error) {
                 console.error('Error fetching data:', error);
-                container.innerHTML = `<div class="error">Failed to load toolbox contents. Please try again later.</div>`;
+                container.innerHTML = `<div class="error">Failed to load toolbox contents. Make sure your branch name matches line 146 ('main').</div>`;
             }
         }
 
-        // Run on page load
         fetchRepoContents();
     </script>
 </body>
