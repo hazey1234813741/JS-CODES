@@ -194,7 +194,7 @@
     <script>
         const REPO_OWNER = 'TT-ZERTZ';
         const REPO_NAME = 'JS-TOOLBOX';
-        const BRANCH = 'main'; // If your default branch is called 'master', change this to 'master'
+        const BRANCH = 'main'; 
         
         const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
 
@@ -213,8 +213,6 @@
                 }
                 
                 const data = await response.json();
-                
-                // Finds all files ending with .js anywhere in the project
                 const jsFiles = data.tree.filter(item => item.type === 'blob' && item.path.endsWith('.js'));
                 
                 if (jsFiles.length === 0) {
@@ -229,7 +227,6 @@
                     const fileName = pathParts[pathParts.length - 1];
                     const folderName = pathParts.length > 1 ? pathParts[0] : 'root';
                     const cleanName = fileName.replace('.js', '');
-                    
                     const elementId = cleanName.replace(/\s+/g, '-').toLowerCase();
                     
                     const card = document.createElement('div');
