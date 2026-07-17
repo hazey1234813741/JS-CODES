@@ -138,6 +138,15 @@
             cursor: grab;
             display: inline-block;
             user-select: none;
+            max-width: 200px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .btn-drag:hover {
+            background-color: #2ea44f;
+            text-decoration: none;
         }
 
         .btn-drag:active {
@@ -156,6 +165,7 @@
 
         .btn-view:hover {
             background-color: #30363d;
+            text-decoration: none;
         }
 
         .loading, .error {
@@ -182,8 +192,8 @@
         <p><strong>💡 How to use these as Bookmarklets:</strong></p>
         <ol>
             <li>Make sure your browser's Bookmarks bar is visible (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> or <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</li>
-            <li>Click and hold the green <strong>Drag to Bookmarks</strong> button.</li>
-            <li>Drag it up to your bookmarks bar and release it. Click it on any website to execute the script!</li>
+            <li>Click and hold the green button displaying the tool's name.</li>
+            <li>Drag it directly onto your bookmarks bar and release it. Click it on any website to run it!</li>
         </ol>
     </div>
 
@@ -265,9 +275,8 @@
                             
                             const dragLink = document.createElement('a');
                             dragLink.href = bookmarkletUrl;
-                            dragLink.title = cleanName; // Assigns the actual tool name to the bookmark item
+                            dragLink.innerText = cleanName; 
                             dragLink.className = 'btn-drag';
-                            dragLink.innerText = 'Drag to Bookmarks';
                             dragLink.onclick = (e) => e.preventDefault(); 
                             
                             actionsDiv.insertBefore(dragLink, actionsDiv.firstChild);
