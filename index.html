@@ -313,13 +313,14 @@
                             demoBtn.innerText = 'Run Demo';
                             demoBtn.onclick = () => {
                                 try {
-                                    let cleanCode = rawCode;
-                                    // Safeguard: if code is manually encoded, decode it cleanly
-                                    if (cleanCode.includes('%')) {
-                                        cleanCode = decodeURIComponent(cleanCode);
-                                    }
-                                    if (cleanCode.startsWith('javascript:')) {
+                                    let cleanCode = rawCode.trim();
+                                    
+                                    // Strip out protocol prefix safely if present
+                                    if (/^javascript:/i.test(cleanCode)) {
                                         cleanCode = cleanCode.replace(/^javascript:/i, '');
+                                        try {
+                                            cleanCode = decodeURIComponent(cleanCode);
+                                        } catch(e) {}
                                     }
                                     
                                     const runScript = new Function(cleanCode);
