@@ -150,6 +150,10 @@
             text-decoration: none;
         }
 
+        .btn-drag:active {
+            cursor: grabbing;
+        }
+
         .btn-demo {
             background-color: var(--demo-color);
             border: 1px solid rgba(240,246,252,0.1);
@@ -250,7 +254,6 @@
                 
                 const data = await response.json();
                 
-                // Targets CODES and hacks folders exactly as before
                 const jsFiles = data.tree.filter(item => {
                     const inTargetFolder = item.path.startsWith('CODES/') || item.path.startsWith('hacks/');
                     return item.type === 'blob' && inTargetFolder && !item.path.endsWith('.md');
@@ -310,7 +313,16 @@
                             demoBtn.innerText = 'Run Demo';
                             demoBtn.onclick = () => {
                                 try {
-                                    const runScript = new Function(rawCode);
+                                    let cleanCode = rawCode;
+                                    // Safeguard: if code is manually encoded, decode it cleanly
+                                    if (cleanCode.includes('%')) {
+                                        cleanCode = decodeURIComponent(cleanCode);
+                                    }
+                                    if (cleanCode.startsWith('javascript:')) {
+                                        cleanCode = cleanCode.replace(/^javascript:/i, '');
+                                    }
+                                    
+                                    const runScript = new Function(cleanCode);
                                     runScript();
                                 } catch (err) {
                                     console.error("Demo failed:", err);
