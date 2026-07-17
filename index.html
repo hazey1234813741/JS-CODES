@@ -214,7 +214,6 @@
                 
                 const data = await response.json();
                 
-                // Gathers everything inside CODES and hacks folders, ignores markdown files
                 const jsFiles = data.tree.filter(item => {
                     const inTargetFolder = item.path.startsWith('CODES/') || item.path.startsWith('hacks/');
                     return item.type === 'blob' && inTargetFolder && !item.path.endsWith('.md');
@@ -233,7 +232,6 @@
                     const folderName = pathParts.length > 1 ? pathParts[0] : 'root';
                     const cleanName = fileName.replace('.js', '');
                     
-                    // Safe ID configuration using indices to prevent broken HTML attributes
                     const elementId = `tool-${index}`;
                     
                     const card = document.createElement('div');
@@ -267,6 +265,7 @@
                             
                             const dragLink = document.createElement('a');
                             dragLink.href = bookmarkletUrl;
+                            dragLink.title = cleanName; // Assigns the actual tool name to the bookmark item
                             dragLink.className = 'btn-drag';
                             dragLink.innerText = 'Drag to Bookmarks';
                             dragLink.onclick = (e) => e.preventDefault(); 
